@@ -1,0 +1,1173 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Manual do Usuário — Despesas Vitamed</title>
+<meta name="description" content="Manual completo do Sistema de Despesas da Farmácia Vitamed: do primeiro login à leitura gerencial dos relatórios.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com/3.4.17"></script>
+<style>
+/* ==========================================================================
+   Design tokens
+   Layout: trilha fixa à esquerda (sumário navegável) + coluna de leitura à
+   direita; no celular a trilha vira uma gaveta deslizante.
+   ========================================================================== */
+:root{
+  --bg: #F4F6F3;
+  --surface: #FFFFFF;
+  --surface-2: #ECF1EC;
+  --ink: #122018;
+  --ink-soft: #4B5A52;
+  --ink-faint: #7C8A82;
+  --accent: #0E7A5A;
+  --accent-ink: #063D2C;
+  --accent-soft: #E3F1E9;
+  --border: #DCE3DD;
+  --warn: #9A6400;
+  --warn-soft: #FBF0D9;
+  --danger: #B3261E;
+  --danger-soft: #FBE4E2;
+  --info: #1E5C8A;
+  --info-soft: #E3EEF6;
+  --shadow: 0 1px 2px rgba(18,32,24,.06), 0 8px 24px -12px rgba(18,32,24,.18);
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg: #0D1511;
+    --surface: #141E18;
+    --surface-2: #1A251E;
+    --ink: #E9F2EC;
+    --ink-soft: #A9BBB0;
+    --ink-faint: #76897E;
+    --accent: #3FD6A0;
+    --accent-ink: #CFF6E2;
+    --accent-soft: #16302544;
+    --border: #253129;
+    --warn: #E3B341;
+    --warn-soft: #2E2510;
+    --danger: #F2897F;
+    --danger-soft: #311716;
+    --info: #7FB8E8;
+    --info-soft: #102531;
+    --shadow: 0 1px 2px rgba(0,0,0,.4), 0 8px 28px -12px rgba(0,0,0,.6);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg: #0D1511; --surface: #141E18; --surface-2: #1A251E; --ink: #E9F2EC;
+  --ink-soft: #A9BBB0; --ink-faint: #76897E; --accent: #3FD6A0; --accent-ink: #CFF6E2;
+  --accent-soft: #16302544; --border: #253129; --warn: #E3B341; --warn-soft: #2E2510;
+  --danger: #F2897F; --danger-soft: #311716; --info: #7FB8E8; --info-soft: #102531;
+  --shadow: 0 1px 2px rgba(0,0,0,.4), 0 8px 28px -12px rgba(0,0,0,.6);
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+@media (prefers-reduced-motion: reduce){ html { scroll-behavior: auto; } *{ animation-duration: .01ms !important; transition-duration: .01ms !important; scroll-behavior: auto !important; } }
+
+body{
+  background: var(--bg);
+  color: var(--ink);
+  font-family: 'IBM Plex Sans', ui-sans-serif, system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  padding-left: max(0px, env(safe-area-inset-left, 0px));
+  padding-right: max(0px, env(safe-area-inset-right, 0px));
+}
+.font-display{ font-family: 'Fraunces', ui-serif, Georgia, serif; }
+.font-mono{ font-family: 'IBM Plex Mono', ui-monospace, monospace; }
+
+h1,h2,h3,h4{ text-wrap: balance; }
+.prose-p{ max-width: 68ch; }
+.tabular{ font-variant-numeric: tabular-nums; }
+
+/* Scrollbar discreta no tema escuro */
+@media (prefers-color-scheme: dark){ * { scrollbar-color: var(--border) transparent; } }
+
+/* Barra de progresso de leitura */
+#barra-progresso{ position: fixed; top:0; left:0; height:3px; width:0%; background: var(--accent); z-index:60; transition: width .1s linear; }
+
+/* Trilha (sidebar) */
+#trilha{
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+}
+.trilha-link{
+  display:flex; align-items:center; gap:.65rem;
+  padding: .5rem .75rem; border-radius: .6rem;
+  color: var(--ink-soft); font-size:.875rem; font-weight:500;
+  border:1px solid transparent;
+  transition: background .15s ease, color .15s ease, border-color .15s ease;
+}
+.trilha-link:hover{ background: var(--surface-2); color: var(--ink); }
+.trilha-link.ativo{ background: var(--accent-soft); color: var(--accent-ink); border-color: color-mix(in oklab, var(--accent) 35%, transparent); }
+.trilha-num{
+  flex-shrink:0; width:1.6rem; height:1.6rem; border-radius:999px;
+  display:flex; align-items:center; justify-content:center;
+  font-family:'IBM Plex Mono',monospace; font-size:.7rem; font-weight:600;
+  background: var(--surface-2); color: var(--ink-faint);
+  border:1px solid var(--border);
+}
+.trilha-link.ativo .trilha-num{ background: var(--accent); color: var(--surface); border-color: var(--accent); }
+
+/* Cartão de seção */
+.cartao{ background: var(--surface); border:1px solid var(--border); border-radius: 1rem; box-shadow: var(--shadow); }
+
+/* Selo de rótulo de seção (eyebrow) */
+.rotulo-secao{
+  display:inline-flex; align-items:center; gap:.5rem;
+  font-family:'IBM Plex Mono',monospace; font-size:.72rem; letter-spacing:.14em; text-transform:uppercase;
+  color: var(--accent-ink); background: var(--accent-soft);
+  padding:.3rem .65rem; border-radius:999px; border:1px solid color-mix(in oklab, var(--accent) 30%, transparent);
+}
+
+/* Callouts pedagógicos */
+.nota{ border-radius:.85rem; border:1px solid var(--border); padding:1rem 1.1rem; display:flex; gap:.75rem; }
+.nota svg{ flex-shrink:0; margin-top:.15rem; }
+.nota-dica{ background: var(--info-soft); border-color: color-mix(in oklab, var(--info) 35%, transparent); }
+.nota-dica svg{ color: var(--info); }
+.nota-atencao{ background: var(--warn-soft); border-color: color-mix(in oklab, var(--warn) 35%, transparent); }
+.nota-atencao svg{ color: var(--warn); }
+.nota-importante{ background: var(--danger-soft); border-color: color-mix(in oklab, var(--danger) 35%, transparent); }
+.nota-importante svg{ color: var(--danger); }
+
+.badge{ display:inline-flex; align-items:center; border-radius:999px; padding:.1rem .55rem; font-size:.68rem; font-weight:600; }
+
+/* Prints reais do sistema (telas capturadas em specs/prints/) */
+figure.print-real{ margin:1.5rem 0 0; scroll-margin-top: 6rem; }
+figure.print-real img{ display:block; width:100%; border-radius:1rem; border:1px solid var(--border); box-shadow: var(--shadow); }
+figure.print-real figcaption{ margin-top:.6rem; font-size:.82rem; color:var(--ink-faint); text-align:center; }
+
+/* Prints "de exemplo" mais estreitos (modais, PDFs, menus) — sem isto, esticar pra 100% da
+   coluna de leitura aumenta a imagem toda (inclusive a altura) bem mais do que o necessário. */
+figure.print-real.print-compact{ max-width: 440px; margin-left: auto; margin-right: auto; }
+figure.print-real.print-compact img{ width: 100%; }
+
+/* Tabela simples de referência */
+table.ref{ width:100%; border-collapse: collapse; font-size:.875rem; }
+table.ref th{ text-align:left; font-family:'IBM Plex Mono',monospace; font-size:.68rem; letter-spacing:.08em; text-transform:uppercase; color:var(--ink-faint); padding:.5rem .75rem; border-bottom:1px solid var(--border); }
+table.ref td{ padding:.6rem .75rem; border-bottom:1px solid var(--border); color: var(--ink-soft); vertical-align:top; }
+table.ref tr:last-child td{ border-bottom:0; }
+table.ref td strong{ color:var(--ink); font-weight:600; }
+
+/* Botão flutuante voltar ao topo */
+#voltar-topo{ box-shadow: var(--shadow); }
+
+::selection{ background: var(--accent); color: var(--surface); }
+
+@media print{
+  #trilha, #barra-leitura-mobile, #barra-progresso, #voltar-topo, .no-print{ display:none !important; }
+  body{ background:#fff; color:#000; }
+  #conteudo{ margin-left:0 !important; max-width:none !important; padding:0 !important; }
+  .cartao{ box-shadow:none !important; border-color:#ccc !important; break-inside: avoid; }
+  section.secao{ break-before: page; }
+  section.secao:first-of-type{ break-before: avoid; }
+  a[href]:after{ content:""; }
+  figure.print-real{ break-inside: avoid; }
+  figure.print-real img{ box-shadow:none !important; }
+}
+</style>
+</head>
+<body class="antialiased">
+
+<div id="barra-progresso"></div>
+
+<!-- ============================= CAPA / HERO ============================= -->
+<header class="relative overflow-hidden border-b" style="border-color:var(--border); background: var(--surface);">
+  <div class="absolute inset-0 pointer-events-none opacity-60" style="background: radial-gradient(60% 50% at 85% 0%, var(--accent-soft), transparent 70%);"></div>
+  <div class="relative max-w-[1400px] mx-auto px-5 sm:px-8 lg:px-12 pt-10 pb-12 sm:pt-16 sm:pb-16">
+    <div class="flex items-start justify-between gap-6">
+      <div class="flex items-center gap-3">
+        <div class="h-11 w-11 rounded-xl flex items-center justify-center shrink-0" style="background:var(--accent); color:var(--surface);">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-6 w-6"><path d="M7 3h7l4 4v14H7z"/><path d="M14 3v4h4"/><path d="M9 12h6M9 16h6"/></svg>
+        </div>
+        <div class="leading-tight">
+          <p class="font-mono text-[.7rem] tracking-[.16em] uppercase" style="color:var(--ink-faint);">Farmácia Vitamed</p>
+          <p class="font-semibold text-sm" style="color:var(--ink);">Sistema de Despesas</p>
+        </div>
+      </div>
+      <div class="flex items-center gap-2 no-print">
+        <button id="btn-tema" type="button" aria-label="Alternar tema claro/escuro"
+          class="h-10 w-10 rounded-full border flex items-center justify-center transition-colors"
+          style="border-color:var(--border); color:var(--ink-soft);">
+          <svg id="icone-sol" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-[18px] w-[18px]"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
+          <svg id="icone-lua" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-[18px] w-[18px] hidden"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+        </button>
+        <button id="btn-imprimir-topo" type="button"
+          class="hidden sm:inline-flex items-center gap-2 h-10 px-4 rounded-full font-medium text-sm transition-colors"
+          style="background:var(--accent); color:var(--surface);">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4"><path d="M6 9V3h12v6"/><rect x="4" y="9" width="16" height="7" rx="1"/><path d="M6 16h12v6H6z"/></svg>
+          Imprimir / Salvar PDF
+        </button>
+      </div>
+    </div>
+
+    <div class="mt-10 sm:mt-14 max-w-3xl">
+      <span class="rotulo-secao">Manual do usuário · versão 1.0</span>
+      <h1 class="font-display mt-4 text-[2.4rem] sm:text-[3.4rem] leading-[1.05] font-semibold" style="color:var(--ink);">
+        Domine o controle financeiro da farmácia, do primeiro acesso à leitura gerencial.
+      </h1>
+      <p class="prose-p mt-5 text-base sm:text-lg" style="color:var(--ink-soft);">
+        Este é o guia oficial do Sistema de Despesas: como lançar e pagar contas, acompanhar o fluxo de caixa,
+        ler os relatórios e tomar decisões melhores com os números que o sistema já organiza pra você.
+        Escrito como um treinamento conduzido por um consultor, não como uma lista fria de telas.
+      </p>
+      <div class="mt-7 flex flex-wrap items-center gap-3 text-sm" style="color:var(--ink-faint);">
+        <span class="inline-flex items-center gap-1.5"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M3 10h18M8 2v4M16 2v4"/></svg> 13 seções</span>
+        <span>·</span>
+        <span class="inline-flex items-center gap-1.5"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg> ~40 min de leitura</span>
+        <span>·</span>
+        <span class="inline-flex items-center gap-1.5"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4"><rect x="5" y="2" width="14" height="20" rx="2"/><path d="M9 18h6"/></svg> funciona bem no celular</span>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- Barra mobile: abre a trilha + imprimir -->
+<div id="barra-leitura-mobile" class="lg:hidden sticky top-0 z-40 flex items-center justify-between gap-3 px-4 py-3 border-b backdrop-blur no-print"
+     style="background: color-mix(in oklab, var(--surface) 92%, transparent); border-color:var(--border);">
+  <button id="btn-abrir-trilha" type="button" class="inline-flex items-center gap-2 text-sm font-medium" style="color:var(--ink);">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-5 w-5"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+    Sumário
+  </button>
+  <span id="titulo-secao-atual" class="text-xs font-mono truncate max-w-[45%]" style="color:var(--ink-faint);">Bem-vindo</span>
+  <button id="btn-imprimir-mobile" type="button" aria-label="Imprimir" class="h-8 w-8 flex items-center justify-center rounded-full border" style="border-color:var(--border); color:var(--ink-soft);">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4"><path d="M6 9V3h12v6"/><rect x="4" y="9" width="16" height="7" rx="1"/><path d="M6 16h12v6H6z"/></svg>
+  </button>
+</div>
+
+<!-- Overlay da gaveta mobile -->
+<div id="overlay-trilha" class="lg:hidden fixed inset-0 bg-black/50 z-40 hidden no-print"></div>
+
+<div class="max-w-[1400px] mx-auto lg:flex lg:items-start">
+
+  <!-- ============================= TRILHA (NAV) ============================= -->
+  <nav id="trilha" aria-label="Sumário do manual"
+       class="no-print fixed lg:sticky top-0 lg:top-0 left-0 z-50 lg:z-0 h-dvh lg:h-screen w-[82vw] max-w-[320px] lg:w-[300px] lg:shrink-0
+              -translate-x-full lg:translate-x-0 transition-transform duration-200 overflow-y-auto">
+    <div class="p-5 flex items-center justify-between lg:hidden">
+      <span class="font-display font-semibold">Sumário</span>
+      <button id="btn-fechar-trilha" type="button" aria-label="Fechar sumário" class="h-8 w-8 flex items-center justify-center rounded-full" style="color:var(--ink-soft);">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-5 w-5"><path d="M18 6 6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div class="px-4 pb-10 pt-2 lg:pt-6 space-y-1" id="lista-trilha">
+      <!-- preenchido via JS a partir das seções, pra nunca ficar fora de sincronia -->
+    </div>
+    <div class="px-5 pb-8 pt-2 hidden lg:block">
+      <div class="h-px w-full mb-4" style="background:var(--border);"></div>
+      <p class="text-xs" style="color:var(--ink-faint);">Farmácia Vitamed &middot; Sistema de Despesas</p>
+      <p class="text-xs font-mono mt-1" style="color:var(--ink-faint);">Manual v1.0</p>
+    </div>
+  </nav>
+
+  <!-- ============================= CONTEÚDO ============================= -->
+  <main id="conteudo" class="min-w-0 flex-1 px-5 sm:px-8 lg:px-14 py-10 sm:py-14 space-y-14 sm:space-y-20">
+
+    <!-- ============================================================= -->
+    <section id="bem-vindo" data-titulo="Bem-vindo" class="secao scroll-mt-24">
+      <span class="rotulo-secao">Comece aqui</span>
+      <h2 class="font-display text-3xl sm:text-4xl font-semibold mt-4" style="color:var(--ink);">Para que serve este sistema</h2>
+      <p class="prose-p mt-5 text-[1.05rem] leading-relaxed" style="color:var(--ink-soft);">
+        O Sistema de Despesas organiza tudo que a farmácia tem a pagar: aluguel, fornecedores, folha, contas de
+        consumo, impostos e qualquer outra saída de dinheiro. Em vez de planilhas soltas, cada despesa vira um
+        <strong style="color:var(--ink);">lançamento</strong> com vencimento, valor, forma de pagamento e uma conta
+        do seu plano de contas — e a partir disso o sistema monta sozinho os relatórios que normalmente dariam
+        horas de trabalho manual: quanto já foi pago, quanto falta, onde o dinheiro está concentrado e qual é a
+        necessidade de caixa dos próximos dias.
+      </p>
+      <p class="prose-p mt-4 text-[1.05rem] leading-relaxed" style="color:var(--ink-soft);">
+        Este manual foi escrito pensando em dois tipos de leitor, e tudo bem se você for os dois ao mesmo tempo:
+      </p>
+      <div class="grid sm:grid-cols-2 gap-4 mt-6">
+        <div class="cartao p-5">
+          <div class="h-9 w-9 rounded-lg flex items-center justify-center mb-3" style="background:var(--accent-soft); color:var(--accent-ink);">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-5 w-5"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>
+          </div>
+          <h3 class="font-semibold" style="color:var(--ink);">Quem opera no dia a dia</h3>
+          <p class="text-sm mt-1.5" style="color:var(--ink-soft);">Lança despesas, dá baixa quando paga, confere o extrato bancário. Comece pelas seções 1 a 4.</p>
+        </div>
+        <div class="cartao p-5">
+          <div class="h-9 w-9 rounded-lg flex items-center justify-center mb-3" style="background:var(--accent-soft); color:var(--accent-ink);">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-5 w-5"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg>
+          </div>
+          <h3 class="font-semibold" style="color:var(--ink);">Quem olha o resultado</h3>
+          <p class="text-sm mt-1.5" style="color:var(--ink-soft);">Lê o Dashboard, o DRE e a Previsão de Caixa pra decidir. Vá direto às seções 5 e 11.</p>
+        </div>
+      </div>
+
+      <div class="nota nota-dica mt-8">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-5 w-5"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+        <div class="text-sm leading-relaxed" style="color:var(--ink);">
+          <strong>Como usar este manual:</strong> ele foi pensado como uma trilha, na ordem em que você normalmente
+          aprenderia o sistema — mas o sumário à esquerda (ou o botão “Sumário” no celular) leva direto pra qualquer
+          seção, a qualquer momento. Não precisa ler tudo de uma vez.
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================================================= -->
+    <section id="primeiros-passos" data-titulo="Primeiros passos" class="secao scroll-mt-24">
+      <span class="rotulo-secao">01 · Começando</span>
+      <h2 class="font-display text-3xl sm:text-4xl font-semibold mt-4" style="color:var(--ink);">Login e navegação</h2>
+
+      <h3 class="font-semibold text-lg mt-8" style="color:var(--ink);">Entrando no sistema</h3>
+      <p class="prose-p mt-2 leading-relaxed" style="color:var(--ink-soft);">
+        Acesse o endereço do sistema e informe o seu <strong style="color:var(--ink);">nome de usuário</strong> e a
+        <strong style="color:var(--ink);">senha</strong> cadastrados para você. Cada pessoa tem seu próprio login —
+        isso é o que permite ao sistema saber quem fez cada lançamento e quem tem permissão pra cada tela.
+      </p>
+
+      <figure class="print-real print-compact" id="print-01">
+        <img src="prints/print-01-login.png" alt="Tela de login do Sistema de Despesas">
+        <figcaption>Tela de login</figcaption>
+      </figure>
+
+      <div class="nota nota-atencao mt-6">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-5 w-5"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        <div class="text-sm leading-relaxed" style="color:var(--ink);">
+          Esqueceu a senha? O sistema não tem recuperação automática por e-mail — quem resolve isso é um
+          administrador, na tela <strong>Acessos › Usuários</strong> (seção 7.1). Peça pra ele redefinir, e depois
+          troque por uma senha só sua no primeiro acesso.
+        </div>
+      </div>
+
+      <h3 class="font-semibold text-lg mt-10" style="color:var(--ink);">O que você vê depois de entrar</h3>
+      <p class="prose-p mt-2 leading-relaxed" style="color:var(--ink-soft);">
+        O menu principal fica numa barra lateral (ou no topo, dependendo da configuração escolhida nos Parâmetros
+        do Sistema — seção 9.1) e está dividido por assunto. Essa organização não é arbitrária: ela separa o que
+        você <em>faz</em> todos os dias (Dashboard, Lançamentos) do que você <em>consulta</em> periodicamente
+        (Relatórios) e do que você <em>configura</em> raramente (Cadastros, Acessos, Parâmetros).
+      </p>
+      <div class="overflow-x-auto mt-5 cartao">
+        <table class="ref">
+          <thead><tr><th>Grupo</th><th>O que tem lá</th></tr></thead>
+          <tbody>
+            <tr><td><strong>Direto no menu</strong></td><td>Dashboard e Lançamentos — as duas telas mais usadas no dia a dia, por isso não ficam dentro de nenhum submenu.</td></tr>
+            <tr><td><strong>Relatórios</strong></td><td>Extrato Bancário Mensal, Relatório DRE e Previsão de Caixa — leitura gerencial, sem edição.</td></tr>
+            <tr><td><strong>Cadastros</strong></td><td>Plano de Contas, Contas Bancárias, Formas de Pagamento de Despesa e Despesas Recorrentes — a base que alimenta tudo o resto.</td></tr>
+            <tr><td><strong>Acessos</strong></td><td>Usuários e Papéis e Permissões — quem entra no sistema e o que cada um pode fazer.</td></tr>
+            <tr><td><strong>Parâmetros do Sistema</strong></td><td>Ícone de engrenagem — configurações gerais (aparência, avisos, impressão, grupos do DRE).</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <figure class="print-real print-compact" id="print-02">
+        <img src="prints/print-02-menu.png" alt="Menu principal do sistema, expandido">
+        <figcaption>Menu principal, com todos os grupos expandidos</figcaption>
+      </figure>
+
+      <div class="nota nota-dica mt-6">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-5 w-5"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+        <div class="text-sm leading-relaxed" style="color:var(--ink);">
+          Não está vendo algum item desta lista? Não é um defeito — o menu mostra só o que o seu papel de acesso
+          permite. Veja a seção 7.2 pra entender como isso funciona, ou fale com quem administra o sistema na sua
+          farmácia.
+        </div>
+      </div>
+
+      <h3 class="font-semibold text-lg mt-10" style="color:var(--ink);">Tema claro e escuro</h3>
+      <p class="prose-p mt-2 leading-relaxed" style="color:var(--ink-soft);">
+        No canto do menu há um botão de sol/lua pra trocar entre tema claro e escuro a qualquer momento — útil pra
+        quem passa o dia todo de olho na tela, ou simplesmente prefere o visual escuro. Essa escolha é por
+        dispositivo/navegador: trocar o tema no computador do caixa não muda o do celular do gerente. O
+        administrador define, em Parâmetros do Sistema (seção 9.1), qual tema abre por padrão para quem nunca
+        trocou manualmente — mas cada pessoa continua livre para alternar quando quiser.
+      </p>
+
+      <h3 class="font-semibold text-lg mt-8" style="color:var(--ink);">Menu lateral ou menu superior</h3>
+      <p class="prose-p mt-2 leading-relaxed" style="color:var(--ink-soft);">
+        Também em Parâmetros do Sistema, o administrador escolhe se o menu de navegação fica numa coluna fixa à
+        esquerda (<strong style="color:var(--ink);">Lateral</strong>) ou numa barra horizontal no topo
+        (<strong style="color:var(--ink);">Superior</strong>). O layout lateral aproveita melhor telas largas de
+        computador, com espaço pra mostrar o nome de cada tela; o superior libera mais altura de tela, o que ajuda
+        em notebooks menores. É uma preferência visual — nenhuma funcionalidade muda de um pra outro.
+      </p>
+
+      <h3 class="font-semibold text-lg mt-8" style="color:var(--ink);">Encerrando a sessão</h3>
+      <p class="prose-p mt-2 leading-relaxed" style="color:var(--ink-soft);">
+        No rodapé do menu (ou no canto superior, no layout de menu superior) fica o nome de quem está logado e a
+        opção de sair. Sempre encerre a sessão ao usar um computador compartilhado, especialmente num caixa ou
+        balcão de atendimento — qualquer pessoa com a sessão aberta tem exatamente as permissões daquele usuário.
+      </p>
+    </section>
+
+    <!-- ============================================================= -->
+    <section id="dashboard" data-titulo="Dashboard" class="secao scroll-mt-24">
+      <span class="rotulo-secao">02 · Visão geral</span>
+      <h2 class="font-display text-3xl sm:text-4xl font-semibold mt-4" style="color:var(--ink);">Dashboard: o resumo do período</h2>
+      <p class="prose-p mt-5 leading-relaxed" style="color:var(--ink-soft);">
+        É a tela inicial pra quem tem permissão de vê-la, e a que melhor responde à pergunta
+        <em>“como está a farmácia este mês?”</em> em menos de um minuto. Tudo nela reage ao filtro de período
+        no topo — mensal, trimestral, semestral ou anual — então o primeiro passo é sempre escolher o período que
+        você quer analisar.
+      </p>
+
+      <h3 class="font-semibold text-lg mt-8" style="color:var(--ink);">Escolhendo o período</h3>
+      <div class="overflow-x-auto mt-3 cartao">
+        <table class="ref">
+          <thead><tr><th>Período</th><th>Quando usar</th></tr></thead>
+          <tbody>
+            <tr><td><strong>Mensal</strong></td><td>O dia a dia — fechar o mês, comparar com o mês anterior.</td></tr>
+            <tr><td><strong>Trimestral</strong></td><td>Suavizar meses atípicos (um 13º salário, uma compra grande pontual) e ver a tendência real.</td></tr>
+            <tr><td><strong>Semestral</strong></td><td>Avaliação de meio de ano — bom momento pra revisar contratos e fornecedores.</td></tr>
+            <tr><td><strong>Anual</strong></td><td>Visão de fechamento de ano, para planejamento do ano seguinte.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="prose-p mt-4 leading-relaxed" style="color:var(--ink-soft);">
+        Em qualquer uma dessas granularidades, o Dashboard sempre compara o período escolhido com o
+        <strong style="color:var(--ink);">período imediatamente anterior de mesmo tamanho</strong> — um trimestre
+        contra o trimestre anterior, um mês contra o mês anterior. É essa comparação que alimenta as setinhas de
+        variação (crescimento em vermelho, queda em verde, já que aqui “queda” é uma notícia boa) no Ranking.
+      </p>
+
+      <figure class="print-real" id="print-03">
+        <img src="prints/print-03-dashboard-geral.png" alt="Dashboard com os quatro cartões, Índice de Adimplência e Contabilizada×Livre">
+        <figcaption>Dashboard — visão geral do mês</figcaption>
+      </figure>
+
+      <h3 class="font-semibold text-lg mt-10" style="color:var(--ink);">Os quatro cartões principais</h3>
+      <div class="overflow-x-auto mt-4 cartao">
+        <table class="ref">
+          <thead><tr><th>Cartão</th><th>O que significa</th></tr></thead>
+          <tbody>
+            <tr><td><strong>Total de Despesas</strong></td><td>Soma de tudo que vence no período, pago ou não. É o tamanho real da conta.</td></tr>
+            <tr><td><strong>Total Pago</strong></td><td>O que já efetivamente saiu da conta bancária no período.</td></tr>
+            <tr><td><strong>Total a Pagar</strong></td><td>O que ainda está em aberto, com previsão de vencer dentro do período.</td></tr>
+            <tr><td><strong>Atenção</strong></td><td>Só aparece quando existe despesa vencida e ainda não paga — é o alerta que pede ação imediata.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3 class="font-semibold text-lg mt-10" style="color:var(--ink);">Índice de Adimplência</h3>
+      <p class="prose-p mt-2 leading-relaxed" style="color:var(--ink-soft);">
+        Mostra, entre tudo que foi pago no período, qual fração foi paga <strong style="color:var(--ink);">em dia</strong>
+        (até a data de vencimento) contra o que foi paga com atraso. Um índice caindo mês a mês geralmente aponta um
+        problema de processo — pagamento sendo lembrado tarde demais — mais do que falta de dinheiro.
+      </p>
+
+      <h3 class="font-semibold text-lg mt-8" style="color:var(--ink);">Contabilizada × Livre</h3>
+      <p class="prose-p mt-2 leading-relaxed" style="color:var(--ink-soft);">
+        Toda despesa é marcada como <strong style="color:var(--ink);">contabilizada</strong> (entra formalmente na
+        contabilidade da empresa, com nota fiscal) ou <strong style="color:var(--ink);">livre</strong> (uma saída de
+        caixa que não compõe a contabilidade oficial, como um adiantamento ou uma despesa de caixa pequena). Esse
+        indicador ajuda a enxergar rápido a proporção entre as duas sem abrir um relatório.
+      </p>
+
+      <h3 class="font-semibold text-lg mt-8" style="color:var(--ink);">Gráficos: por forma de pagamento e por conta bancária</h3>
+      <p class="prose-p mt-2 leading-relaxed" style="color:var(--ink-soft);">
+        Dois gráficos de rosca mostram a distribuição do período por forma de pagamento (Pix, boleto, cartão...) e
+        por conta bancária — úteis pra enxergar concentração: se quase tudo sai de uma única conta, por exemplo, vale
+        reavaliar o fluxo de caixa daquela conta especificamente. Logo abaixo, um gráfico de evolução mostra como o
+        total do período se distribui ao longo dos dias (num mês) ou dos meses (num período maior).
+      </p>
+
+      <figure class="print-real" id="print-04">
+        <img src="prints/print-04-dashboard-graficos.png" alt="Gráficos de distribuição por forma de pagamento, conta bancária e evolução no período">
+        <figcaption>Dashboard — gráficos de distribuição</figcaption>
+      </figure>
+
+      <h3 class="font-semibold text-lg mt-8" style="color:var(--ink);">Ranking: as três abas</h3>
+      <p class="prose-p mt-2 leading-relaxed" style="color:var(--ink-soft);">
+        Na parte de baixo, o Ranking mostra quem mais pesa no período, em três visões diferentes — <strong style="color:var(--ink);">Plano de Conta</strong>,
+        <strong style="color:var(--ink);">Grupo do DRE</strong> e <strong style="color:var(--ink);">Forma de Pagamento</strong> —
+        cada item com sua colocação (1º, 2º, 3º...) e a variação contra o período anterior. É a ferramenta certa pra
+        perguntas do tipo “no que eu mais gastei este trimestre, e isso cresceu ou caiu desde o trimestre passado?”.
+        Clique em cada aba pra trocar a visão sem perder o período selecionado.
+      </p>
+
+      <figure class="print-real" id="print-05">
+        <img src="prints/print-05-dashboard-ranking.png" alt="Ranking do Dashboard na aba Plano de Conta">
+        <figcaption>Dashboard — Ranking (aba Plano de Conta)</figcaption>
+      </figure>
+    </section>
+
+    <!-- ============================================================= -->
+    <section id="lancamentos" data-titulo="Lançamentos" class="secao scroll-mt-24">
+      <span class="rotulo-secao">03 · Operação diária</span>
+      <h2 class="font-display text-3xl sm:text-4xl font-semibold mt-4" style="color:var(--ink);">Lançamentos: registrar e pagar despesas</h2>
+      <p class="prose-p mt-5 leading-relaxed" style="color:var(--ink-soft);">
+        Esta é a tela que você vai abrir todos os dias. Cada linha da grade é uma despesa — uma conta a pagar — com
+        vencimento, valor, forma de pagamento e situação. É aqui que o trabalho operacional do financeiro acontece:
+        lançar contas novas, conferir o que vence hoje e dar baixa no que já foi pago.
+      </p>
+
+      <h3 class="font-semibold text-lg mt-8" style="color:var(--ink);">Entendendo o status de cada despesa</h3>
+      <div class="flex flex-wrap gap-2.5 mt-4">
+        <span class="badge" style="background:var(--danger-soft); color:var(--danger);">Vencida</span>
+        <span class="badge" style="background:var(--warn-soft); color:var(--warn);">Em Aberto</span>
+        <span class="badge" style="background:var(--accent-soft); color:var(--accent-ink);">Paga</span>
+      </div>
+      <div class="overflow-x-auto mt-4 cartao">
+        <table class="ref">
+          <tbody>
+            <tr><td><strong>Vencida</strong></td><td>Já passou da data de vencimento e ainda não foi paga. Precisa de atenção imediata.</td></tr>
+            <tr><td><strong>Em Aberto</strong></td><td>Ainda não venceu e ainda não foi paga — inclui tanto o que vence daqui a muito tempo quanto o que está prestes a vencer (esse “quase vencendo” é o que abastece a Central de Avisos, seção 8).</td></tr>
+            <tr><td><strong>Paga</strong></td><td>Já recebeu baixa — o dinheiro já saiu da conta.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <figure class="print-real" id="print-06">
+        <img src="prints/print-06-lancamentos-grade.png" alt="Grade de Lançamentos com despesas Vencida, Em Aberto e Paga">
+        <figcaption>Lançamentos — grade com despesas de status variados</figcaption>
+      </figure>
+
+      <h3 class="font-semibold text-lg mt-10" style="color:var(--ink);">Filtrando a grade</h3>
+      <p class="prose-p mt-2 leading-relaxed" style="color:var(--ink-soft);">
+        O botão <strong style="color:var(--ink);">Filtros</strong> abre um painel com todas as combinações possíveis:
+        período de vencimento, conta do plano de contas, forma de pagamento, conta bancária, status e se é
+        contabilizada ou livre. Os filtros se combinam entre si — quanto mais específico, mais rápido você chega no
+        lançamento que procura. Depois de aplicar, um resumo dos filtros ativos aparece acima da grade — clique no
+        “x” de cada um pra removê-lo individualmente, sem precisar reabrir o painel inteiro.
+      </p>
+
+      <figure class="print-real print-compact" id="print-07">
+        <img src="prints/print-07-lancamentos-filtros.png" alt="Painel de filtros da tela de Lançamentos">
+        <figcaption>Lançamentos — painel de filtros</figcaption>
+      </figure>
+
+      <h3 class="font-semibold text-lg mt-10" style="color:var(--ink);">Lançar uma despesa nova</h3>
+      <ol class="mt-3 space-y-2 text-sm leading-relaxed" style="color:var(--ink-soft);">
+        <li><strong style="color:var(--ink);">1.</strong> Clique em <strong style="color:var(--ink);">+ Novo Lançamento</strong>.</li>
+        <li><strong style="color:var(--ink);">2.</strong> Escolha a conta do plano de contas — só aparecem contas “finais”, que de fato recebem lançamento (veja a seção 6.1 pra entender por quê).</li>
+        <li><strong style="color:var(--ink);">3.</strong> Preencha descrição, valor e data de vencimento.</li>
+        <li><strong style="color:var(--ink);">4.</strong> Escolha a forma de pagamento prevista — ela já vincula a conta bancária de onde o dinheiro deve sair.</li>
+        <li><strong style="color:var(--ink);">5.</strong> Marque se é contabilizada ou livre, e salve.</li>
+      </ol>
+
+      <figure class="print-real print-compact" id="print-08">
+        <img src="prints/print-08-lancamentos-novo.png" alt="Modal Novo Lançamento preenchido">
+        <figcaption>Modal “Novo Lançamento”</figcaption>
+      </figure>
+
+      <h3 class="font-semibold text-lg mt-10" style="color:var(--ink);">Editar ou excluir um lançamento</h3>
+      <p class="prose-p mt-2 leading-relaxed" style="color:var(--ink-soft);">
+        O ícone de edição, na linha de cada despesa, reabre o mesmo formulário do cadastro com os dados já
+        preenchidos. Qualquer campo pode ser corrigido — inclusive de uma despesa já paga, embora nesse caso o
+        cuidado deva ser maior: mudar valor ou data de vencimento de algo que já entrou num relatório de um mês
+        fechado altera esse relatório retroativamente. O ícone de exclusão remove o lançamento por completo; essa
+        ação não pode ser desfeita pela interface, então o sistema sempre pede uma confirmação explícita antes de
+        excluir. Ambas as ações dependem do seu papel ter as permissões “Editar despesa lançada” e “Excluir
+        despesa lançada” (seção 7.2) — sem elas, os ícones simplesmente não aparecem na sua tela.
+      </p>
+
+      <h3 class="font-semibold text-lg mt-10" style="color:var(--ink);">Dar baixa (marcar como paga)</h3>
+      <p class="prose-p mt-2 leading-relaxed" style="color:var(--ink-soft);">
+        Clique no ícone de baixa na linha da despesa. Um modal resume o que você está pagando — nome, a qual
+        conta do plano de contas pertence, valor — e pede a data de pagamento. Se na hora de pagar você usou uma
+        forma diferente da planejada, pode trocar ali mesmo: a conta bancária exibida se atualiza sozinha conforme
+        você muda a forma de pagamento. Se precisar alterar algo além disso (valor, vencimento, descrição), tem um
+        link discreto que abre a edição completa daquele lançamento sem você precisar fechar e procurar de novo.
+      </p>
+
+      <figure class="print-real print-compact" id="print-09">
+        <img src="prints/print-09-lancamentos-baixa.png" alt="Modal Dar baixa preenchido">
+        <figcaption>Modal “Dar baixa”</figcaption>
+      </figure>
+
+      <h3 class="font-semibold text-lg mt-10" style="color:var(--ink);">Imprimir e exportar</h3>
+      <p class="prose-p mt-2 leading-relaxed" style="color:var(--ink-soft);">
+        O ícone de impressora gera um relatório em PDF da grade exatamente como você filtrou — útil pra levar uma
+        lista física pra conferência. O ícone de exportação gera uma planilha (.csv) com os mesmos dados, pronta pra
+        abrir no Excel.
+      </p>
+    </section>
+
+    <!-- ============================================================= -->
+    <section id="recorrentes" data-titulo="Despesas recorrentes" class="secao scroll-mt-24">
+      <span class="rotulo-secao">04 · Automatize o repetitivo</span>
+      <h2 class="font-display text-3xl sm:text-4xl font-semibold mt-4" style="color:var(--ink);">Despesas recorrentes</h2>
+      <p class="prose-p mt-5 leading-relaxed" style="color:var(--ink-soft);">
+        Aluguel, internet, sistema, plano de saúde — contas que se repetem mês após mês não precisam ser digitadas
+        toda vez. Cadastre a recorrência uma única vez e o sistema lança sozinho a despesa em aberto, alguns dias
+        antes do vencimento, pronta pra você só conferir e pagar.
+      </p>
+
+      <h3 class="font-semibold text-lg mt-8" style="color:var(--ink);">As quatro periodicidades</h3>
+      <div class="overflow-x-auto mt-4 cartao">
+        <table class="ref">
+          <thead><tr><th>Periodicidade</th><th>Como funciona</th></tr></thead>
+          <tbody>
+            <tr><td><strong>Semanal</strong></td><td>Escolha o dia da semana (ex.: toda segunda-feira).</td></tr>
+            <tr><td><strong>Mensal</strong></td><td>Escolha o dia do mês (ex.: todo dia 10). Em meses mais curtos que esse dia, vence no último dia do mês.</td></tr>
+            <tr><td><strong>Bimestral</strong></td><td>Escolha o “Mês de início do ciclo” e o dia — o sistema lança de 2 em 2 meses a partir dali. Março, por exemplo, gera Março / Maio / Julho / Setembro / Novembro / Janeiro. É diferente da Anual: aqui o mês escolhido é só o ponto de partida do ciclo, não o único mês do ano em que a despesa vence.</td></tr>
+            <tr><td><strong>Anual</strong></td><td>Escolha o mês e o dia — uma única vez por ano, sempre no mesmo mês.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="prose-p mt-4 leading-relaxed" style="color:var(--ink-soft);">
+        O sistema não cria todas as parcelas futuras de uma vez — ele gera cada ocorrência só quando ela se
+        aproxima, dentro da janela de antecedência configurada em Parâmetros do Sistema (a mesma janela usada pela
+        Central de Avisos, seção 8). Isso evita um cadastro com centenas de lançamentos futuros inúteis: a despesa
+        nasce em aberto na tela de Lançamentos um pouco antes de vencer, pronta pra você conferir e pagar.
+      </p>
+
+      <figure class="print-real" id="print-10">
+        <img src="prints/print-10-recorrentes-lista.png" alt="Lista de Despesas Recorrentes com as quatro periodicidades">
+        <figcaption>Despesas Recorrentes — lista</figcaption>
+      </figure>
+
+      <figure class="print-real print-compact" id="print-11">
+        <img src="prints/print-11-recorrentes-bimestral.png" alt="Cadastro de recorrência com periodicidade Bimestral selecionada">
+        <figcaption>Cadastro de recorrência — periodicidade Bimestral</figcaption>
+      </figure>
+
+      <h3 class="font-semibold text-lg mt-10" style="color:var(--ink);">Pausar e reativar</h3>
+      <p class="prose-p mt-2 leading-relaxed" style="color:var(--ink-soft);">
+        Um contrato que acabou ou um serviço temporariamente suspenso pode ser <strong style="color:var(--ink);">inativado</strong>
+        sem apagar nada — o histórico de despesas já geradas continua intacto. Reativar não gera retroativamente o
+        período em que ficou pausada: a geração recomeça a partir do dia em que você reativa.
+      </p>
+
+      <h3 class="font-semibold text-lg mt-8" style="color:var(--ink);">Histórico da recorrência</h3>
+      <p class="prose-p mt-2 leading-relaxed" style="color:var(--ink-soft);">
+        O ícone de histórico, na linha de cada recorrência, abre um resumo com tudo que já foi gerado a partir
+        dela — data, status, valor, conta bancária e forma de pagamento de cada ocorrência — no mesmo formato da
+        grade de Lançamentos. É a forma mais rápida de responder “esse aluguel está sendo pago certinho todo mês?”.
+      </p>
+
+      <figure class="print-real" id="print-12">
+        <img src="prints/print-12-recorrentes-historico.png" alt="Modal de histórico de uma despesa recorrente">
+        <figcaption>Modal de histórico de uma recorrência</figcaption>
+      </figure>
+    </section>
+
+    <!-- ============================================================= -->
+    <section id="relatorios" data-titulo="Relatórios" class="secao scroll-mt-24">
+      <span class="rotulo-secao">05 · Leitura gerencial</span>
+      <h2 class="font-display text-3xl sm:text-4xl font-semibold mt-4" style="color:var(--ink);">Relatórios</h2>
+      <p class="prose-p mt-5 leading-relaxed" style="color:var(--ink-soft);">
+        Três relatórios cobrem três perguntas diferentes: <em>o dinheiro saiu como eu esperava?</em> (Extrato
+        Bancário), <em>pra onde ele foi, estruturado contabilmente?</em> (DRE) e <em>quanto eu vou precisar nos
+        próximos dias?</em> (Previsão de Caixa).
+      </p>
+
+      <h3 class="font-semibold text-lg mt-10" style="color:var(--ink);">5.1 Extrato Bancário Mensal</h3>
+      <p class="prose-p mt-2 leading-relaxed" style="color:var(--ink-soft);">
+        Escolha uma conta bancária e um mês: o relatório lista, dia a dia, tudo que foi efetivamente pago por
+        aquela conta, com o total de cada dia e o total do mês no rodapé — no mesmo formato visual de um extrato
+        bancário de verdade, inclusive com as saídas destacadas como débito. É a ferramenta certa pra conferir,
+        linha por linha, contra o extrato real do banco no fechamento do mês.
+      </p>
+
+      <figure class="print-real" id="print-13">
+        <img src="prints/print-13-extrato-tela.png" alt="Tela do Extrato Bancário Mensal">
+        <figcaption>Extrato Bancário Mensal — tela</figcaption>
+      </figure>
+
+      <p class="prose-p mt-5 leading-relaxed" style="color:var(--ink-soft);">
+        O botão de impressão gera uma versão em PDF deste mesmo extrato, pronta pra arquivar ou enviar ao
+        contador — útil como comprovante formal de que o saldo bate com o banco no fechamento do mês.
+      </p>
+
+      <figure class="print-real print-compact" id="print-14">
+        <img src="prints/print-14-extrato-pdf.png" alt="PDF gerado do Extrato Bancário Mensal">
+        <figcaption>Extrato Bancário — PDF gerado</figcaption>
+      </figure>
+
+      <h3 class="font-semibold text-lg mt-10" style="color:var(--ink);">5.2 Relatório DRE</h3>
+      <p class="prose-p mt-2 leading-relaxed" style="color:var(--ink-soft);">
+        Mostra a despesa organizada na estrutura contábil: <strong style="color:var(--ink);">Grupo</strong>
+        (a grande categoria, ligada ao Grupo do DRE) &rsaquo; <strong style="color:var(--ink);">Categoria</strong>
+        &rsaquo; <strong style="color:var(--ink);">Conta</strong>. Tem duas formas de ver:
+      </p>
+      <div class="grid sm:grid-cols-2 gap-4 mt-4">
+        <div class="cartao p-4">
+          <p class="font-semibold text-sm" style="color:var(--ink);">Visão Analítica</p>
+          <p class="text-sm mt-1.5" style="color:var(--ink-soft);">Desce até o lançamento individual dentro de cada conta — o detalhe completo.</p>
+        </div>
+        <div class="cartao p-4">
+          <p class="font-semibold text-sm" style="color:var(--ink);">Visão Sintética</p>
+          <p class="text-sm mt-1.5" style="color:var(--ink-soft);">Para no nível da conta, sem listar cada lançamento — o resumo pra uma leitura rápida.</p>
+        </div>
+      </div>
+      <p class="prose-p mt-4 leading-relaxed" style="color:var(--ink-soft);">
+        Cada linha mostra também o percentual que representa do total do período (a chamada análise vertical) — é
+        o que deixa claro, de cara, se a “Folha de Pagamento” é 15% ou 60% do seu gasto total, por exemplo.
+      </p>
+
+      <figure class="print-real" id="print-15">
+        <img src="prints/print-15-dre-analitico.png" alt="Relatório DRE na visão Analítica, árvore expandida">
+        <figcaption>Relatório DRE — visão Analítica</figcaption>
+      </figure>
+
+      <figure class="print-real" id="print-16">
+        <img src="prints/print-16-dre-sintetico.png" alt="Relatório DRE na visão Sintética">
+        <figcaption>Relatório DRE — visão Sintética</figcaption>
+      </figure>
+
+      <h3 class="font-semibold text-lg mt-10" style="color:var(--ink);">5.3 Previsão de Caixa</h3>
+      <p class="prose-p mt-2 leading-relaxed" style="color:var(--ink-soft);">
+        O único relatório que olha pra frente. Escolha um mês (nunca um mês que já passou) e o sistema junta duas
+        fontes de informação: as despesas que já estão lançadas com vencimento naquele mês, e as ocorrências de
+        despesas recorrentes que <em>ainda vão</em> ser geradas — simuladas, sem criar nada de verdade no sistema
+        — pra te mostrar a necessidade de caixa completa, organizada por semana e por dia.
+      </p>
+      <div class="flex flex-wrap gap-2.5 mt-5">
+        <span class="badge" style="background:var(--info-soft); color:var(--info);">Já lançado</span>
+        <span class="badge" style="background:var(--warn-soft); color:var(--warn);">Simulado</span>
+        <span class="badge" style="background:var(--accent-soft); color:var(--accent-ink);">Já pago</span>
+      </div>
+      <p class="prose-p mt-4 leading-relaxed" style="color:var(--ink-soft);">
+        Dentro do mês atual, que já está parcialmente em andamento, o relatório também mostra o que já foi
+        executado (pago) — assim você vê, num único lugar, o que já saiu, o que ainda está em aberto e o que vem
+        por aí. Um destaque de “maior necessidade do período” aponta o dia em que você vai precisar de mais
+        dinheiro em caixa — a pergunta exata que esse relatório existe pra responder.
+      </p>
+      <p class="prose-p mt-4 leading-relaxed" style="color:var(--ink-soft);">
+        Só é possível escolher o mês atual ou um mês futuro — meses que já passaram não aparecem no seletor,
+        porque este relatório é uma ferramenta de planejamento, não de conferência histórica (pra isso, use o
+        Dashboard, o DRE ou o Extrato Bancário).
+      </p>
+
+      <figure class="print-real" id="print-17">
+        <img src="prints/print-17-previsao-tela.png" alt="Tela da Previsão de Caixa do mês atual">
+        <figcaption>Previsão de Caixa — tela, mês atual</figcaption>
+      </figure>
+
+      <figure class="print-real print-compact" id="print-18">
+        <img src="prints/print-18-previsao-pdf.png" alt="PDF gerado da Previsão de Caixa">
+        <figcaption>Previsão de Caixa — PDF gerado</figcaption>
+      </figure>
+    </section>
+
+    <!-- ============================================================= -->
+    <section id="cadastros" data-titulo="Cadastros" class="secao scroll-mt-24">
+      <span class="rotulo-secao">06 · A base de tudo</span>
+      <h2 class="font-display text-3xl sm:text-4xl font-semibold mt-4" style="color:var(--ink);">Cadastros: a estrutura por trás dos números</h2>
+      <p class="prose-p mt-5 leading-relaxed" style="color:var(--ink-soft);">
+        Antes de lançar a primeira despesa, vale entender quatro cadastros que sustentam todo o resto do sistema.
+        Normalmente são configurados uma vez no início e mexidos raramente depois.
+      </p>
+
+      <h3 class="font-semibold text-lg mt-8" style="color:var(--ink);">6.1 Plano de Contas</h3>
+      <p class="prose-p mt-2 leading-relaxed" style="color:var(--ink-soft);">
+        É a árvore que organiza toda despesa em três níveis: <strong style="color:var(--ink);">Grupo</strong>
+        &rsaquo; <strong style="color:var(--ink);">Categoria</strong> &rsaquo; <strong style="color:var(--ink);">Conta</strong>.
+        Só as contas no fim de um ramo (sem filhas) podem receber lançamento direto — Grupo e Categoria servem
+        apenas pra agrupar e totalizar os relatórios, como o DRE.
+      </p>
+
+      <figure class="print-real" id="print-19">
+        <img src="prints/print-19-plano-contas.png" alt="Árvore do Plano de Contas expandida">
+        <figcaption>Plano de Contas — árvore expandida</figcaption>
+      </figure>
+      <p class="prose-p mt-4 leading-relaxed" style="color:var(--ink-soft);">
+        Cada Grupo (o nível mais alto) está ligado a um <strong style="color:var(--ink);">Grupo do DRE</strong>,
+        configurado em Parâmetros do Sistema — é essa ligação que estrutura o Relatório DRE (seção 5.2). As setas
+        de reordenar em cada linha ajustam a ordem de exibição dentro do mesmo nível. Uma conta, categoria ou
+        grupo só pode ser inativado se não tiver nenhuma despesa ativa classificada nele (nem direta, nem
+        herdada de um nível abaixo) — é uma proteção contra inativar algo que ainda está em uso, sem precisar
+        conferir manualmente antes.
+      </p>
+
+      <h3 class="font-semibold text-lg mt-10" style="color:var(--ink);">6.2 Contas Bancárias</h3>
+      <p class="prose-p mt-2 leading-relaxed" style="color:var(--ink-soft);">
+        As contas de onde o dinheiro efetivamente sai. Cadastre todas as contas bancárias que a farmácia usa pra
+        pagar despesas — elas vão ser vinculadas às formas de pagamento no próximo cadastro. Uma conta bancária
+        inativada deixa de aparecer nas opções de novos lançamentos, mas continua sendo exibida normalmente no
+        histórico de despesas que já foram pagas por ela.
+      </p>
+
+      <figure class="print-real" id="print-20">
+        <img src="prints/print-20-contas-bancarias.png" alt="Lista de Contas Bancárias">
+        <figcaption>Contas Bancárias — lista</figcaption>
+      </figure>
+
+      <h3 class="font-semibold text-lg mt-10" style="color:var(--ink);">6.3 Formas de Pagamento</h3>
+      <p class="prose-p mt-2 leading-relaxed" style="color:var(--ink-soft);">
+        Pix, boleto, cartão de crédito, transferência — cada forma de pagamento está amarrada a uma conta bancária.
+        É por isso que, ao escolher a forma de pagamento num lançamento, o sistema já sabe de qual conta aquele
+        dinheiro vai sair, sem você precisar informar duas vezes.
+      </p>
+
+      <figure class="print-real" id="print-21">
+        <img src="prints/print-21-formas-pagamento.png" alt="Lista de Formas de Pagamento">
+        <figcaption>Formas de Pagamento — lista</figcaption>
+      </figure>
+
+      <h3 class="font-semibold text-lg mt-10" style="color:var(--ink);">6.4 Despesas Recorrentes</h3>
+      <p class="prose-p mt-2 leading-relaxed" style="color:var(--ink-soft);">
+        Já apresentado em detalhe na seção 4 — está listado aqui porque também é, na essência, um cadastro: uma
+        regra que você configura uma vez.
+      </p>
+    </section>
+
+    <!-- ============================================================= -->
+    <section id="acessos" data-titulo="Acessos" class="secao scroll-mt-24">
+      <span class="rotulo-secao">07 · Segurança</span>
+      <h2 class="font-display text-3xl sm:text-4xl font-semibold mt-4" style="color:var(--ink);">Acessos: quem entra e o que pode fazer</h2>
+
+      <h3 class="font-semibold text-lg mt-8" style="color:var(--ink);">7.1 Usuários</h3>
+      <p class="prose-p mt-2 leading-relaxed" style="color:var(--ink-soft);">
+        Cada pessoa que usa o sistema tem um cadastro de usuário, com nome, senha e um papel associado. Um usuário
+        inativado perde o acesso imediatamente, mesmo que ainda esteja logado em algum lugar — e todo o histórico
+        de lançamentos feitos por ele continua preservado, com o nome dele registrado em cada um.
+      </p>
+      <div class="nota nota-dica mt-5">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-5 w-5"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+        <div class="text-sm leading-relaxed" style="color:var(--ink);">
+          Redefinir a senha de alguém é feito por um administrador direto no cadastro do usuário — não existe
+          “esqueci minha senha” por e-mail.
+        </div>
+      </div>
+
+      <figure class="print-real" id="print-22">
+        <img src="prints/print-22-usuarios.png" alt="Lista de usuários cadastrados">
+        <figcaption>Usuários — lista</figcaption>
+      </figure>
+
+      <h3 class="font-semibold text-lg mt-10" style="color:var(--ink);">7.2 Papéis e Permissões</h3>
+      <p class="prose-p mt-2 leading-relaxed" style="color:var(--ink-soft);">
+        Um <strong style="color:var(--ink);">papel</strong> é um conjunto de permissões (ex.: “Financeiro”,
+        “Gerência”). Em vez de configurar o acesso pessoa por pessoa, você configura o papel uma vez e atribui esse
+        papel a quantos usuários precisar. Cada permissão é específica por tela e por ação — por exemplo, alguém
+        pode ter permissão pra <em>ver</em> Lançamentos sem poder <em>excluir</em> um. As permissões aparecem
+        organizadas por módulo, exatamente na mesma estrutura do menu — <strong style="color:var(--ink);">Dashboard</strong>,
+        <strong style="color:var(--ink);">Lançamentos</strong>, <strong style="color:var(--ink);">Relatórios ›
+        Extrato Bancário / Relatório DRE / Previsão de Caixa</strong>, e cada cadastro dentro de
+        <strong style="color:var(--ink);">Cadastros</strong> — o que deixa fácil montar um papel “só vê
+        relatórios” ou “só lança despesas”, por exemplo. Algumas permissões dependem de outra (não dá pra
+        “excluir” sem também poder “visualizar”); o sistema marca essa dependência automaticamente ao montar o
+        papel.
+      </p>
+      <div class="nota nota-atencao mt-5">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-5 w-5"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        <div class="text-sm leading-relaxed" style="color:var(--ink);">
+          Existe um papel de <strong>acesso total</strong>, que enxerga tudo, inclusive telas criadas no futuro.
+          Reserve-o pra pouquíssimas pessoas — o ideal é que a maioria dos usuários tenha só o que precisa pra sua
+          função, nem mais, nem menos. Por segurança, o sistema nunca deixa inativar o último usuário com acesso
+          total ainda ativo: sempre precisa existir pelo menos um administrador disponível.
+        </div>
+      </div>
+
+      <figure class="print-real print-compact" id="print-23">
+        <img src="prints/print-23-papeis-matriz.png" alt="Matriz de permissões na edição de um papel de acesso">
+        <figcaption>Edição de um papel — matriz de permissões</figcaption>
+      </figure>
+    </section>
+
+    <!-- ============================================================= -->
+    <section id="avisos" data-titulo="Central de Avisos" class="secao scroll-mt-24">
+      <span class="rotulo-secao">08 · Rotina diária</span>
+      <h2 class="font-display text-3xl sm:text-4xl font-semibold mt-4" style="color:var(--ink);">Central de Avisos</h2>
+      <p class="prose-p mt-5 leading-relaxed" style="color:var(--ink-soft);">
+        Uma lista objetiva de tudo que está <strong style="color:var(--ink);">vencido</strong> ou
+        <strong style="color:var(--ink);">a vencer</strong> dentro de uma janela de dias configurável (em
+        Parâmetros do Sistema, seção 9.2) — pensada pra ser a primeira tela que você abre no dia, antes mesmo do
+        Dashboard. As despesas mais atrasadas aparecem primeiro, e você pode dar baixa direto por ali, sem precisar
+        ir até Lançamentos.
+      </p>
+      <div class="nota nota-dica mt-6">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-5 w-5"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+        <div class="text-sm leading-relaxed" style="color:var(--ink);">
+          Uma recorrência configurada corretamente (seção 4) alimenta esta central sozinha — você não precisa se
+          lembrar manualmente de nenhuma conta repetitiva.
+        </div>
+      </div>
+
+      <figure class="print-real" id="print-24">
+        <img src="prints/print-24-avisos.png" alt="Central de Avisos com despesas vencidas e a vencer">
+        <figcaption>Central de Avisos — lista</figcaption>
+      </figure>
+    </section>
+
+    <!-- ============================================================= -->
+    <section id="parametros" data-titulo="Parâmetros do Sistema" class="secao scroll-mt-24">
+      <span class="rotulo-secao">09 · Configuração geral</span>
+      <h2 class="font-display text-3xl sm:text-4xl font-semibold mt-4" style="color:var(--ink);">Parâmetros do Sistema</h2>
+      <p class="prose-p mt-5 leading-relaxed" style="color:var(--ink-soft);">
+        Quatro blocos de configuração que valem pra todo mundo que usa o sistema — normalmente mexidos só por um
+        administrador, raramente no dia a dia.
+      </p>
+      <div class="overflow-x-auto mt-6 cartao">
+        <table class="ref">
+          <thead><tr><th>Bloco</th><th>O que configura</th></tr></thead>
+          <tbody>
+            <tr><td><strong>9.1 Aparência</strong></td><td>Tema padrão (Claro/Escuro), formato do menu (Lateral/Superior) e se o menu lateral já abre colapsado para quem nunca definiu uma preferência própria.</td></tr>
+            <tr><td><strong>9.2 Central de Avisos</strong></td><td>“Dias de antecedência para aviso de vencimento” — quantos dias antes do vencimento uma despesa em aberto passa a aparecer como “A vencer”.</td></tr>
+            <tr><td><strong>9.3 Impressão</strong></td><td>Liga ou desliga um cabeçalho e rodapé padrão em todo relatório impresso — ver seção 10.</td></tr>
+            <tr><td><strong>9.4 Parâmetros DRE</strong></td><td>Lista dos Grupos do DRE (criar, renomear, ativar/inativar) que servem de base pro Plano de Contas (seção 6.1).</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p class="prose-p mt-5 leading-relaxed" style="color:var(--ink-soft);">
+        Cada bloco desta tela é salvo de forma independente — clicar em “Salvar” no card de Aparência não afeta o
+        que está configurado no card de Impressão, e vice-versa.
+      </p>
+
+      <figure class="print-real print-compact" id="print-25">
+        <img src="prints/print-25-parametros-geral.png" alt="Cards de Aparência e Central de Avisos em Parâmetros do Sistema">
+        <figcaption>Parâmetros do Sistema — Aparência e Central de Avisos</figcaption>
+      </figure>
+
+      <h3 class="font-semibold text-lg mt-10" style="color:var(--ink);">9.3 Impressão, em detalhe</h3>
+      <p class="prose-p mt-2 leading-relaxed" style="color:var(--ink-soft);">
+        Quando “Imprimir cabeçalho e rodapé padrão do sistema” está desligado, as impressões continuam exatamente
+        como sempre foram — só o conteúdo do relatório, sem nada extra. Ao ligar, aparecem quatro opções:
+      </p>
+      <div class="overflow-x-auto mt-3 cartao">
+        <table class="ref">
+          <tbody>
+            <tr><td><strong>Nome no cabeçalho</strong></td><td>Texto livre (ex.: “Farmácia Vitamed”) que aparece no topo de toda impressão, acima do título do relatório.</td></tr>
+            <tr><td><strong>Texto do rodapé</strong></td><td>Opcional — repete no rodapé de cada página impressa. Deixe em branco pra não mostrar nada ali.</td></tr>
+            <tr><td><strong>Mostrar quem gerou</strong></td><td>Exibe o nome do usuário logado que gerou aquela impressão — útil para rastreabilidade.</td></tr>
+            <tr><td><strong>Mostrar paginação</strong></td><td>Adiciona “Página X de Y” em cada folha, essencial em relatórios longos como o Extrato Bancário ou a Previsão de Caixa.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <figure class="print-real print-compact" id="print-26">
+        <img src="prints/print-26-parametros-impressao.png" alt="Card de Impressão em Parâmetros do Sistema, expandido">
+        <figcaption>Parâmetros do Sistema — card de Impressão</figcaption>
+      </figure>
+    </section>
+
+    <!-- ============================================================= -->
+    <section id="impressao" data-titulo="Impressão" class="secao scroll-mt-24">
+      <span class="rotulo-secao">10 · Documentos</span>
+      <h2 class="font-display text-3xl sm:text-4xl font-semibold mt-4" style="color:var(--ink);">Impressão em todo o sistema</h2>
+      <p class="prose-p mt-5 leading-relaxed" style="color:var(--ink-soft);">
+        O ícone de impressora aparece em Lançamentos, Extrato Bancário, Relatório DRE e Previsão de Caixa, sempre
+        no mesmo lugar e com o mesmo comportamento: gera o relatório de acordo com o que está filtrado na tela
+        naquele momento e abre o diálogo de impressão do navegador direto, sem abrir uma aba nova pra você ter que
+        fechar depois.
+      </p>
+      <p class="prose-p mt-4 leading-relaxed" style="color:var(--ink-soft);">
+        Em Parâmetros do Sistema (seção 9.3) dá pra ligar um cabeçalho e rodapé padrão — com o nome da farmácia,
+        quem gerou o relatório e numeração de página — que passa a aparecer automaticamente em toda impressão,
+        nos quatro relatórios ao mesmo tempo: Lançamentos, Extrato Bancário, Relatório DRE e Previsão de Caixa.
+      </p>
+
+      <figure class="print-real print-compact" id="print-27">
+        <img src="prints/print-27-impressao-exemplo.png" alt="Exemplo de impressão com cabeçalho e rodapé ativados">
+        <figcaption>Exemplo de impressão com cabeçalho e rodapé ativados</figcaption>
+      </figure>
+    </section>
+
+    <!-- ============================================================= -->
+    <section id="boas-praticas" data-titulo="Boas práticas de gestão" class="secao scroll-mt-24">
+      <span class="rotulo-secao">11 · Leitura estratégica</span>
+      <h2 class="font-display text-3xl sm:text-4xl font-semibold mt-4" style="color:var(--ink);">Como ler os números pra decidir melhor</h2>
+      <p class="prose-p mt-5 leading-relaxed" style="color:var(--ink-soft);">
+        Um sistema só vale o que a leitura dos dados entrega. Aqui vai uma rotina sugerida, construída ao longo de
+        anos acompanhando negócios de pequeno e médio porte — adapte à realidade da sua farmácia.
+      </p>
+
+      <div class="grid sm:grid-cols-3 gap-4 mt-7">
+        <div class="cartao p-5">
+          <p class="font-mono text-xs uppercase tracking-wide" style="color:var(--accent-ink);">Diária</p>
+          <p class="font-semibold mt-1.5" style="color:var(--ink);">Central de Avisos</p>
+          <p class="text-sm mt-1.5" style="color:var(--ink-soft);">Abra antes de qualquer outra tela. Dê baixa no que foi pago, confirme o que vence hoje.</p>
+        </div>
+        <div class="cartao p-5">
+          <p class="font-mono text-xs uppercase tracking-wide" style="color:var(--accent-ink);">Semanal</p>
+          <p class="font-semibold mt-1.5" style="color:var(--ink);">Lançamentos + Extrato</p>
+          <p class="text-sm mt-1.5" style="color:var(--ink-soft);">Revise tudo que entrou na semana e confira o Extrato Bancário de cada conta usada.</p>
+        </div>
+        <div class="cartao p-5">
+          <p class="font-mono text-xs uppercase tracking-wide" style="color:var(--accent-ink);">Mensal</p>
+          <p class="font-semibold mt-1.5" style="color:var(--ink);">Dashboard + DRE + Previsão</p>
+          <p class="text-sm mt-1.5" style="color:var(--ink-soft);">Feche o mês, entenda a estrutura do gasto e planeje o mês seguinte com a Previsão de Caixa.</p>
+        </div>
+      </div>
+
+      <h3 class="font-semibold text-lg mt-10" style="color:var(--ink);">Sinais pra prestar atenção</h3>
+      <div class="overflow-x-auto mt-4 cartao">
+        <table class="ref">
+          <thead><tr><th>O que você vê</th><th>O que pode estar acontecendo</th></tr></thead>
+          <tbody>
+            <tr><td>Índice de Adimplência caindo mês a mês</td><td>Problema de processo — contas sendo lembradas tarde — mais provável que falta de caixa.</td></tr>
+            <tr><td>Um item isolado no topo do Ranking, bem acima dos demais</td><td>Vale investigar se dá pra negociar com esse fornecedor ou revisar o contrato.</td></tr>
+            <tr><td>Um Grupo do DRE crescendo período após período</td><td>Sinal de que algo estrutural mudou ali — vale entender a causa antes que vire hábito.</td></tr>
+            <tr><td>“Maior necessidade do período”, na Previsão de Caixa, muito concentrada num único dia</td><td>Negocie prazos com fornecedores pra distribuir melhor as saídas ao longo do mês.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ============================================================= -->
+    <section id="faq" data-titulo="Perguntas frequentes" class="secao scroll-mt-24">
+      <span class="rotulo-secao">12 · Dúvidas comuns</span>
+      <h2 class="font-display text-3xl sm:text-4xl font-semibold mt-4" style="color:var(--ink);">Perguntas frequentes</h2>
+
+      <div class="mt-7 space-y-3" id="lista-faq">
+        <!-- cada item é um <details> nativo, acessível e sem precisar de JS pra abrir/fechar -->
+        <details class="cartao p-5 group">
+          <summary class="flex items-center justify-between cursor-pointer list-none font-medium" style="color:var(--ink);">
+            Por que não vejo um menu que eu sei que existe?
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4 shrink-0 transition-transform group-open:rotate-45"><path d="M12 5v14M5 12h14"/></svg>
+          </summary>
+          <p class="text-sm mt-3 leading-relaxed" style="color:var(--ink-soft);">O menu mostra só o que o seu papel de acesso permite (seção 7.2). Fale com um administrador se precisar de acesso a mais telas.</p>
+        </details>
+        <details class="cartao p-5 group">
+          <summary class="flex items-center justify-between cursor-pointer list-none font-medium" style="color:var(--ink);">
+            Esqueci minha senha. E agora?
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4 shrink-0 transition-transform group-open:rotate-45"><path d="M12 5v14M5 12h14"/></svg>
+          </summary>
+          <p class="text-sm mt-3 leading-relaxed" style="color:var(--ink-soft);">Não existe recuperação automática. Peça a um administrador pra redefinir sua senha em Acessos › Usuários.</p>
+        </details>
+        <details class="cartao p-5 group">
+          <summary class="flex items-center justify-between cursor-pointer list-none font-medium" style="color:var(--ink);">
+            Qual a diferença entre “Em Aberto” e “A Vencer”?
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4 shrink-0 transition-transform group-open:rotate-45"><path d="M12 5v14M5 12h14"/></svg>
+          </summary>
+          <p class="text-sm mt-3 leading-relaxed" style="color:var(--ink-soft);">Na tela de Lançamentos as duas aparecem juntas como “Em Aberto” pra simplificar a leitura. Por trás, o sistema diferencia: “A Vencer” é o que está dentro da janela de dias configurada em Parâmetros (é o que entra na Central de Avisos); o restante do que ainda não venceu é só “Em Aberto”.</p>
+        </details>
+        <details class="cartao p-5 group">
+          <summary class="flex items-center justify-between cursor-pointer list-none font-medium" style="color:var(--ink);">
+            Posso editar uma despesa que já foi paga?
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4 shrink-0 transition-transform group-open:rotate-45"><path d="M12 5v14M5 12h14"/></svg>
+          </summary>
+          <p class="text-sm mt-3 leading-relaxed" style="color:var(--ink-soft);">Sim, dentro das permissões do seu papel. Edite com cuidado — alterar valor ou data de um lançamento já pago muda os relatórios de períodos fechados.</p>
+        </details>
+        <details class="cartao p-5 group">
+          <summary class="flex items-center justify-between cursor-pointer list-none font-medium" style="color:var(--ink);">
+            O que acontece se eu pausar uma despesa recorrente?
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4 shrink-0 transition-transform group-open:rotate-45"><path d="M12 5v14M5 12h14"/></svg>
+          </summary>
+          <p class="text-sm mt-3 leading-relaxed" style="color:var(--ink-soft);">Ela para de gerar novas despesas a partir de agora. O que já foi gerado antes continua como está. Reativar não gera retroativamente o período em que ficou pausada.</p>
+        </details>
+        <details class="cartao p-5 group">
+          <summary class="flex items-center justify-between cursor-pointer list-none font-medium" style="color:var(--ink);">
+            A Previsão de Caixa deixa escolher um mês que já passou?
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4 shrink-0 transition-transform group-open:rotate-45"><path d="M12 5v14M5 12h14"/></svg>
+          </summary>
+          <p class="text-sm mt-3 leading-relaxed" style="color:var(--ink-soft);">Não — é uma ferramenta de planejamento, então só aceita o mês atual em diante. Pra olhar pra trás, use o Dashboard, o DRE ou o Extrato Bancário.</p>
+        </details>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<button id="voltar-topo" type="button" aria-label="Voltar ao topo"
+  class="no-print fixed bottom-5 right-5 z-40 h-11 w-11 rounded-full flex items-center justify-center opacity-0 pointer-events-none transition-opacity duration-200"
+  style="background:var(--surface); border:1px solid var(--border); color:var(--ink-soft);">
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-5 w-5"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
+</button>
+
+<script>
+(function () {
+  'use strict';
+
+  /* ---------- Tema (claro/escuro) ---------- */
+  var raiz = document.documentElement;
+  var btnTema = document.getElementById('btn-tema');
+  var iconeSol = document.getElementById('icone-sol');
+  var iconeLua = document.getElementById('icone-lua');
+
+  function temaSalvo() {
+    try { return localStorage.getItem('manual-vitamed-tema'); } catch (e) { return null; }
+  }
+  function salvarTema(v) {
+    try { localStorage.setItem('manual-vitamed-tema', v); } catch (e) { /* navegador privado: segue sem persistir */ }
+  }
+  function aplicarTema(v) {
+    if (v === 'dark' || v === 'light') raiz.setAttribute('data-theme', v);
+    else raiz.removeAttribute('data-theme');
+    var escuro = v === 'dark' || (!v && window.matchMedia('(prefers-color-scheme: dark)').matches);
+    iconeSol.classList.toggle('hidden', escuro);
+    iconeLua.classList.toggle('hidden', !escuro);
+  }
+  aplicarTema(temaSalvo());
+  btnTema.addEventListener('click', function () {
+    var atualEscuro = raiz.getAttribute('data-theme') === 'dark' || (!raiz.getAttribute('data-theme') && window.matchMedia('(prefers-color-scheme: dark)').matches);
+    var novo = atualEscuro ? 'light' : 'dark';
+    aplicarTema(novo);
+    salvarTema(novo);
+  });
+
+  /* ---------- Trilha: monta a partir das seções (nunca sai de sincronia) ---------- */
+  var secoes = Array.prototype.slice.call(document.querySelectorAll('section.secao'));
+  var listaTrilha = document.getElementById('lista-trilha');
+  var tituloMobile = document.getElementById('titulo-secao-atual');
+  var linksTrilha = [];
+
+  secoes.forEach(function (secao, i) {
+    var a = document.createElement('a');
+    a.href = '#' + secao.id;
+    a.className = 'trilha-link';
+    a.innerHTML = '<span class="trilha-num">' + (i + 1) + '</span><span class="truncate">' + secao.dataset.titulo + '</span>';
+    listaTrilha.appendChild(a);
+    linksTrilha.push(a);
+  });
+
+  function marcarAtivo(id) {
+    linksTrilha.forEach(function (a) {
+      var ativo = a.getAttribute('href') === '#' + id;
+      a.classList.toggle('ativo', ativo);
+      if (ativo) {
+        a.setAttribute('aria-current', 'true');
+        tituloMobile.textContent = a.textContent.replace(/^\d+/, '').trim();
+      } else {
+        a.removeAttribute('aria-current');
+      }
+    });
+  }
+
+  if ('IntersectionObserver' in window) {
+    var observador = new IntersectionObserver(function (entradas) {
+      entradas.forEach(function (entrada) {
+        if (entrada.isIntersecting) marcarAtivo(entrada.target.id);
+      });
+    }, { rootMargin: '-15% 0px -70% 0px', threshold: 0 });
+    secoes.forEach(function (s) { observador.observe(s); });
+  }
+  if (secoes.length) marcarAtivo(secoes[0].id);
+
+  /* ---------- Gaveta da trilha no celular ---------- */
+  var trilha = document.getElementById('trilha');
+  var overlay = document.getElementById('overlay-trilha');
+  var btnAbrir = document.getElementById('btn-abrir-trilha');
+  var btnFechar = document.getElementById('btn-fechar-trilha');
+
+  function abrirTrilha() {
+    trilha.classList.remove('-translate-x-full');
+    overlay.classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+  }
+  function fecharTrilha() {
+    trilha.classList.add('-translate-x-full');
+    overlay.classList.add('hidden');
+    document.body.style.overflow = '';
+  }
+  btnAbrir.addEventListener('click', abrirTrilha);
+  btnFechar.addEventListener('click', fecharTrilha);
+  overlay.addEventListener('click', fecharTrilha);
+  linksTrilha.forEach(function (a) { a.addEventListener('click', fecharTrilha); });
+
+  /* ---------- Barra de progresso de leitura ---------- */
+  var barra = document.getElementById('barra-progresso');
+  function atualizarProgresso() {
+    var altura = document.documentElement.scrollHeight - window.innerHeight;
+    var pct = altura > 0 ? (window.scrollY / altura) * 100 : 0;
+    barra.style.width = pct + '%';
+  }
+  window.addEventListener('scroll', atualizarProgresso, { passive: true });
+  atualizarProgresso();
+
+  /* ---------- Voltar ao topo ---------- */
+  var btnTopo = document.getElementById('voltar-topo');
+  window.addEventListener('scroll', function () {
+    var mostrar = window.scrollY > 600;
+    btnTopo.style.opacity = mostrar ? '1' : '0';
+    btnTopo.style.pointerEvents = mostrar ? 'auto' : 'none';
+  }, { passive: true });
+  btnTopo.addEventListener('click', function () { window.scrollTo({ top: 0, behavior: 'smooth' }); });
+
+  /* ---------- Imprimir / salvar em PDF ---------- */
+  function imprimir() { window.print(); }
+  document.getElementById('btn-imprimir-topo').addEventListener('click', imprimir);
+  document.getElementById('btn-imprimir-mobile').addEventListener('click', imprimir);
+})();
+</script>
+</body>
+</html>
